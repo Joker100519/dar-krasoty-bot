@@ -1,5 +1,5 @@
 import type { Env } from "./types";
-import { sendMessage } from "./telegram";
+import { sendMessage } from "./services/telegram";
 import { servicesKeyboard } from "./keyboards";
 
 export async function startBooking(

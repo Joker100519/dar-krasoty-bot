@@ -1,4 +1,4 @@
-import type { Env, UserState } from "./types";
+import type { Env, UserState } from "../types";
 
 const PREFIX = "state:";
 

@@ -1,4 +1,4 @@
-import type { Env } from "./types";
+import type { Env } from "../types";
 
 const api = (env: Env) =>
   `https://api.telegram.org/bot${env.TELEGRAM_TOKEN}`;
