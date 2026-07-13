@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  "name": "dar-krasoty-bot",
+
+  "main": "src/index.ts",
+
+  "compatibility_date": "2026-07-13",
+
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+
+  "observability": {
+    "enabled": true
+  },
+
+  "upload_source_maps": true,
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dar-krasoty-db",
+      "database_id": "8fa13846-8d0a-4ca1-b96d-0696a2c5b67f"
+    }
+  ],
+
+  "kv_namespaces": [
+    {
+      "binding": "BOOKINGS_KV",
+      "id": "c2c6ac9e4c254cd2acc39a0937cbc1f0"
+    }
+  ],
+
+  "triggers": {
+    "crons": [
+      "*/15 * * * *"
+    ]
+  }
+}
