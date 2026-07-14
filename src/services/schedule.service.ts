@@ -20,10 +20,7 @@ export async function getBusyTimes(
       AND bookings.status = 'confirmed'
     ORDER BY bookings.start_time
   `)
-    .bind(
-      city,
-      date
-    )
+    .bind(city, date)
     .all<{ start_time: string }>();
 
   return result.results.map(
@@ -46,5 +43,42 @@ export async function isTimeBusy(
   );
 
   return busyTimes.includes(time);
+
+}
+
+export async function getClosedDates(
+  env: Env,
+  city: string
+): Promise<string[]> {
+
+  const result = await env.DB.prepare(`
+    SELECT
+      closed_dates.date
+    FROM closed_dates
+    INNER JOIN cities
+      ON cities.id = closed_dates.city_id
+    WHERE cities.code = ?
+  `)
+    .bind(city)
+    .all<{ date: string }>();
+
+  return result.results.map(
+    row => row.date
+  );
+
+}
+
+export async function isDateClosed(
+  env: Env,
+  city: string,
+  date: string
+): Promise<boolean> {
+
+  const closedDates = await getClosedDates(
+    env,
+    city
+  );
+
+  return closedDates.includes(date);
 
 }

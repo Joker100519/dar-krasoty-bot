@@ -58,10 +58,10 @@ function addMinutes(
 
 }
 
-export async function createCalendarEvent(
+async function post(
   env: Env,
-  state: UserState
-): Promise<string | null> {
+  body: unknown
+): Promise<any> {
 
   const response = await fetch(
     env.GOOGLE_SCRIPT_URL,
@@ -72,36 +72,7 @@ export async function createCalendarEvent(
         "Content-Type": "application/json",
       },
 
-      body: JSON.stringify({
-
-        telegramId:
-          state.telegramId,
-
-        name:
-          state.name,
-
-        phone:
-          state.phone,
-
-        city:
-          state.city,
-
-        service:
-          serviceName(state.service),
-
-        date:
-          state.date,
-
-        start:
-          state.time,
-
-        end:
-          addMinutes(
-            state.time!,
-            60
-          )
-
-      })
+      body: JSON.stringify(body),
 
     }
   );
@@ -114,15 +85,50 @@ export async function createCalendarEvent(
 
   }
 
-  const result = await response.json() as {
+  return response.json();
 
-    ok: boolean;
+}
 
-    eventId?: string;
+export async function createCalendarEvent(
+  env: Env,
+  state: UserState
+): Promise<string | null> {
 
-    error?: string;
+  const result = await post(
+    env,
+    {
 
-  };
+      action: "create",
+
+      telegramId:
+        state.telegramId,
+
+      name:
+        state.name,
+
+      phone:
+        state.phone,
+
+      city:
+        state.city,
+
+      service:
+        serviceName(state.service),
+
+      date:
+        state.date,
+
+      start:
+        state.time,
+
+      end:
+        addMinutes(
+          state.time!,
+          60
+        )
+
+    }
+  );
 
   if (!result.ok) {
 
@@ -134,5 +140,33 @@ export async function createCalendarEvent(
   }
 
   return result.eventId ?? null;
+
+}
+
+export async function deleteCalendarEvent(
+  env: Env,
+  eventId: string
+): Promise<void> {
+
+  const result = await post(
+    env,
+    {
+
+      action: "delete",
+
+      eventId,
+
+    }
+  );
+
+  if (!result.ok) {
+
+    throw new Error(
+      result.error ??
+      "Не удалось удалить событие"
+
+    );
+
+  }
 
 }

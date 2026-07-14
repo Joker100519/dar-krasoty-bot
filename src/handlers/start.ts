@@ -7,6 +7,13 @@ import { updateState } from "../services/state.service";
 
 import { servicesKeyboard } from "../ui/keyboards";
 
+import { isAdmin } from "../utils/admin";
+
+import {
+  clientMenu,
+  adminMenu,
+} from "../ui/reply-keyboards";
+
 export async function startBooking(
   env: Env,
   chatId: number
@@ -28,4 +35,16 @@ export async function startBooking(
     "🌸 <b>Дар Красоты</b>\n\nДобро пожаловать!\n\nВыберите процедуру:",
     servicesKeyboard()
   );
+
+  await sendMessage(
+    env,
+    chatId,
+    "👇 Главное меню",
+
+    isAdmin(env, chatId)
+      ? adminMenu()
+      : clientMenu()
+
+  );
+
 }

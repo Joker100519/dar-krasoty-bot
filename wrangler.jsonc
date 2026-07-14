@@ -11,11 +11,15 @@
     "nodejs_compat"
   ],
 
-  "observability": {
-    "enabled": true
-  },
+"observability": {
+  "enabled": true
+},
 
-  "upload_source_maps": true,
+"vars": {
+  "ADMIN_IDS": "535882743,7061635812"
+},
+
+"upload_source_maps": true,
 
   "d1_databases": [
     {

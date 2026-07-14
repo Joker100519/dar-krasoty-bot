@@ -127,11 +127,13 @@ export async function createBooking(
   }
 
   // =====================================
-  // Запись
+  // Создание записи
   // =====================================
 
   await env.DB.prepare(`
     INSERT INTO bookings (
+
+      id,
 
       user_id,
       service_id,
@@ -147,9 +149,11 @@ export async function createBooking(
       calendar_event_id
 
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
     .bind(
+
+      crypto.randomUUID(),
 
       user.id,
 

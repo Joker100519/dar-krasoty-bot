@@ -3,6 +3,8 @@ export interface Env {
 
   GOOGLE_SCRIPT_URL: string;
 
+  ADMIN_IDS: string;
+
   BOOKINGS_KV: KVNamespace;
 
   DB: D1Database;

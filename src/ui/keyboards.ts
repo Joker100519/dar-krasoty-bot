@@ -41,7 +41,8 @@ export function citiesKeyboard() {
 // =====================================
 
 export function datesKeyboard(
-  city: string
+  city: string,
+  closedDates: string[]
 ): InlineKeyboardMarkup {
 
   const rows: { text: string; callback_data: string }[][] = [];
@@ -59,8 +60,6 @@ export function datesKeyboard(
 
     if (city === "moscow") {
 
-      // Пн Вт Ср Пт Сб Вс
-
       allowed =
         weekday === 1 ||
         weekday === 2 ||
@@ -70,8 +69,6 @@ export function datesKeyboard(
         weekday === 0;
 
     } else {
-
-      // Ср Чт Пт
 
       allowed =
         weekday === 3 ||
@@ -86,13 +83,20 @@ export function datesKeyboard(
 
     const iso = date.toISOString().split("T")[0];
 
+    if (closedDates.includes(iso)) {
+      continue;
+    }
+
     rows.push([
       {
-        text: date.toLocaleDateString("ru-RU", {
-          weekday: "short",
-          day: "2-digit",
-          month: "2-digit",
-        }),
+        text: date.toLocaleDateString(
+          "ru-RU",
+          {
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit",
+          }
+        ),
         callback_data: `date:${iso}`,
       },
     ]);
@@ -129,15 +133,12 @@ export function timeKeyboard(
         break;
 
       case 3:
-        hours = [9,10];
-        break;
+  hours = [9,10,11];
+  break;
 
-      case 5:
-        hours = [15,16,17,18,19,20];
-        break;
-
-      default:
-        hours = [];
+case 5:
+  hours = [15,16,17,18,19,20];
+  break;
 
     }
 
@@ -146,19 +147,16 @@ export function timeKeyboard(
     switch (weekday) {
 
       case 3:
-        hours = [11,12,13,14,15,16,17,18,19,20];
-        break;
+  hours = [15,16,17,18,19,20];
+  break;
 
-      case 4:
-        hours = [9,10,11,12,13,14,15,16,17,18,19,20];
-        break;
+case 4:
+  hours = [9,10,11,12,13,14,15,16,17,18,19,20];
+  break;
 
-      case 5:
-        hours = [9,10,11,12,13,14];
-        break;
-
-      default:
-        hours = [];
+case 5:
+  hours = [9,10,11];
+  break;
 
     }
 
@@ -194,10 +192,11 @@ export function timeKeyboard(
 }
 
 // =====================================
-// Подтверждение
+// Подтверждение записи
 // =====================================
 
 export function confirmKeyboard() {
+
   return inlineKeyboard([
     [
       {
@@ -212,4 +211,218 @@ export function confirmKeyboard() {
       },
     ],
   ]);
+
+}
+
+// =====================================
+// Мои записи
+// =====================================
+
+export function myBookingsKeyboard(
+  bookingId: string
+): InlineKeyboardMarkup {
+
+  return inlineKeyboard([
+    [
+      {
+        text: "❌ Отменить запись",
+        callback_data: `cancel_booking:${bookingId}`,
+      },
+    ],
+  ]);
+
+}
+
+// =====================================
+// Подтверждение отмены
+// =====================================
+
+export function confirmCancelKeyboard(
+  bookingId: string
+): InlineKeyboardMarkup {
+
+  return inlineKeyboard([
+
+    [
+      {
+        text: "✅ Да, отменить",
+        callback_data: `confirm_cancel:${bookingId}`,
+      },
+    ],
+
+    [
+      {
+        text: "↩️ Назад",
+        callback_data: "my_bookings",
+      },
+    ],
+
+  ]);
+
+}
+
+// =====================================
+// Админ: выбор города
+// =====================================
+
+export function adminCloseCityKeyboard() {
+
+  return inlineKeyboard([
+
+    [
+      {
+        text: "📍 Москва",
+        callback_data: "admin_close_city:moscow",
+      },
+    ],
+
+    [
+      {
+        text: "📍 Тула",
+        callback_data: "admin_close_city:tula",
+      },
+    ],
+
+  ]);
+
+}
+
+export function adminOpenCityKeyboard() {
+
+  return inlineKeyboard([
+
+    [
+      {
+        text: "📍 Москва",
+        callback_data: "admin_open_city:moscow",
+      },
+    ],
+
+    [
+      {
+        text: "📍 Тула",
+        callback_data: "admin_open_city:tula",
+      },
+    ],
+
+  ]);
+
+}
+
+// =====================================
+// Админ: выбор даты
+// =====================================
+
+export function adminDatesKeyboard(
+  action: "close" | "open",
+  city: string,
+  closedDates: string[]
+): InlineKeyboardMarkup {
+
+  const rows: {
+    text: string;
+    callback_data: string;
+  }[][] = [];
+
+  const today = new Date();
+
+  for (let i = 0; i < 21; i++) {
+
+    const date = new Date(today);
+
+    date.setDate(
+      today.getDate() + i
+    );
+
+    const iso =
+  date.toISOString().split("T")[0];
+
+    const isClosed =
+  closedDates.includes(iso);
+
+if (
+  action === "close" &&
+  isClosed
+) {
+  continue;
+}
+
+if (
+  action === "open" &&
+  !isClosed
+) {
+  continue;
+}
+
+    rows.push([
+      {
+        text: date.toLocaleDateString(
+          "ru-RU",
+          {
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit",
+          }
+        ),
+
+        callback_data:
+          `admin_${action}_date:${city}:${iso}`,
+
+      },
+    ]);
+
+  }
+
+  return inlineKeyboard(rows);
+
+}
+
+// =====================================
+// Клиенты (админ)
+// =====================================
+
+export function clientsKeyboard(
+  clients: {
+    id: number;
+    name: string;
+  }[]
+): InlineKeyboardMarkup {
+
+  return inlineKeyboard(
+
+    clients.map(client => [
+
+      {
+
+        text: `👤 ${client.name}`,
+
+        callback_data:
+          `client:${client.id}`
+
+      }
+
+    ])
+
+  );
+
+}
+// =====================================
+// Карточка клиента (админ)
+// =====================================
+
+export function clientCardKeyboard(
+  clientId: number
+): InlineKeyboardMarkup {
+
+  return inlineKeyboard([
+
+    [
+      {
+        text: "📖 История посещений",
+        callback_data: `client_history:${clientId}`,
+      },
+    ],
+
+  ]);
+
 }
