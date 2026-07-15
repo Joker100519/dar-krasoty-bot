@@ -22,11 +22,13 @@ import {
   getUserBookings,
   getBookingById,
   cancelBooking,
+  rescheduleBooking,
 } from "../services/booking.service";
 
 import {
   createCalendarEvent,
   deleteCalendarEvent,
+  updateCalendarEvent,
 } from "../services/calendar.service";
 
 import {
@@ -47,6 +49,7 @@ import {
   timeKeyboard,
   myBookingsKeyboard,
   confirmCancelKeyboard,
+  confirmRescheduleKeyboard,
   adminDatesKeyboard,
 } from "../ui/keyboards";
 
@@ -494,115 +497,179 @@ ${status}
   }
 
   // =====================================
-  // Дата
-  // =====================================
+// Дата
+// =====================================
 
-  if (data.startsWith("date:")) {
+if (data.startsWith("date:")) {
 
-    const date = data.replace("date:", "");
+  const date = data.replace("date:", "");
 
-    const state = await getState(
-      env,
-      chatId
-    );
+  const state = await getState(
+    env,
+    chatId
+  );
 
-    if (!state || !state.city) {
-
-      await sendMessage(
-        env,
-        chatId,
-        "❌ Начните запись заново."
-      );
-
-      return;
-    }
-
-    if (
-      await isDateClosed(
-        env,
-        state.city,
-        date
-      )
-    ) {
-
-      await sendMessage(
-        env,
-        chatId,
-        "❌ Эта дата недоступна для записи."
-      );
-
-      return;
-    }
-
-    const nextState = await updateState(
-      env,
-      chatId,
-      {
-        date,
-        step: "time",
-      }
-    );
-
-    const busyTimes = await getBusyTimes(
-      env,
-      nextState.city!,
-      date
-    );
-
-    const keyboard = timeKeyboard(
-      nextState.city!,
-      date,
-      busyTimes
-    );
-
-    if (keyboard.inline_keyboard.length === 0) {
-
-      await sendMessage(
-        env,
-        chatId,
-        `❌ На выбранную дату свободного времени нет.
-
-Выберите другую дату.`
-      );
-
-      return;
-    }
+  if (!state || !state.city) {
 
     await sendMessage(
       env,
       chatId,
-      "🕒 Выберите время:",
-      keyboard
+      "❌ Начните запись заново."
     );
 
     return;
+
+  }
+
+  if (
+    await isDateClosed(
+      env,
+      state.city,
+      date
+    )
+  ) {
+
+    await sendMessage(
+      env,
+      chatId,
+      "❌ Эта дата недоступна для записи."
+    );
+
+    return;
+
+  }
+
+  const nextStep =
+    state.step === "reschedule_date"
+      ? "reschedule_time"
+      : "time";
+
+  const nextState = await updateState(
+    env,
+    chatId,
+    {
+      date,
+      step: nextStep,
+    }
+  );
+
+  const busyTimes = await getBusyTimes(
+  env,
+  nextState.city!,
+  date,
+  state.step === "reschedule_date"
+    ? state.bookingId
+    : undefined
+);
+
+  const keyboard = timeKeyboard(
+    nextState.city!,
+    date,
+    busyTimes
+  );
+
+  if (keyboard.inline_keyboard.length === 0) {
+
+    await sendMessage(
+      env,
+      chatId,
+      `❌ На выбранную дату свободного времени нет.
+
+Выберите другую дату.`
+    );
+
+    return;
+
+  }
+
+  await sendMessage(
+    env,
+    chatId,
+    "🕒 Выберите время:",
+    keyboard
+  );
+
+  return;
+
+}
+
+// =====================================
+// Время
+// =====================================
+
+if (data.startsWith("time:")) {
+
+  const time = data.replace("time:", "");
+
+  const state = await getState(
+    env,
+    chatId
+  );
+
+  if (!state) {
+
+    await sendMessage(
+      env,
+      chatId,
+      "❌ Начните запись заново."
+    );
+
+    return;
+
   }
 
   // =====================================
-  // Время
+  // Перенос записи
   // =====================================
 
-  if (data.startsWith("time:")) {
-
-    const time = data.replace("time:", "");
+  if (state.step === "reschedule_time") {
 
     await updateState(
       env,
       chatId,
       {
         time,
-        step: "name",
+        step: "reschedule_confirm",
       }
     );
 
     await sendMessage(
       env,
       chatId,
-      "✍️ Введите ваше имя:"
+`✅ <b>Подтвердите перенос записи</b>
+
+📅 Новая дата: ${state.date}
+
+🕒 Новое время: ${time}`,
+      confirmRescheduleKeyboard()
     );
 
     return;
+
   }
+
+  // =====================================
+  // Новая запись
+  // =====================================
+
+  await updateState(
+    env,
+    chatId,
+    {
+      time,
+      step: "name",
+    }
+  );
+
+  await sendMessage(
+    env,
+    chatId,
+    "✍️ Введите ваше имя:"
+  );
+
+  return;
+
+}
 
   // =====================================
   // Подтверждение
@@ -743,6 +810,189 @@ console.log("BOOKING ID:", bookingId);
     confirmCancelKeyboard(
       booking.id
     )
+  );
+
+  return;
+
+}
+
+// =====================================
+// Перенос записи
+// =====================================
+
+if (data.startsWith("reschedule_booking:")) {
+
+  const bookingId =
+    data.replace(
+      "reschedule_booking:",
+      ""
+    );
+
+  const booking =
+    await getBookingById(
+      env,
+      chatId,
+      bookingId
+    );
+
+  if (!booking) {
+
+    await sendMessage(
+      env,
+      chatId,
+      "❌ Запись не найдена."
+    );
+
+    return;
+
+  }
+
+  await updateState(
+    env,
+    chatId,
+    {
+
+      step: "reschedule_date",
+
+      bookingId,
+
+      city: booking.city,
+
+      service: booking.service,
+
+    }
+
+  );
+
+  const closedDates =
+    await getClosedDates(
+      env,
+      booking.city
+    );
+
+  await sendMessage(
+    env,
+    chatId,
+    "📅 Выберите новую дату:",
+
+    datesKeyboard(
+      booking.city,
+      closedDates
+    )
+
+  );
+
+  return;
+
+}
+
+// =====================================
+// Подтверждение переноса
+// =====================================
+
+if (data === "confirm_reschedule") {
+
+  const state =
+    await getState(
+      env,
+      chatId
+    );
+
+  if (
+    !state ||
+    state.step !== "reschedule_confirm" ||
+    !state.bookingId ||
+    !state.date ||
+    !state.time
+  ) {
+
+    await sendMessage(
+      env,
+      chatId,
+      "❌ Не удалось перенести запись."
+    );
+
+    return;
+
+  }
+
+  const booking =
+    await getBookingById(
+      env,
+      chatId,
+      state.bookingId
+    );
+
+  if (!booking) {
+
+    await sendMessage(
+      env,
+      chatId,
+      "❌ Запись не найдена."
+    );
+
+    return;
+
+  }
+
+  const endTime = (() => {
+
+    const hour =
+      Number(
+        state.time.split(":")[0]
+      );
+
+    return `${String(hour + 1).padStart(2, "0")}:00`;
+
+  })();
+
+  await rescheduleBooking(
+
+    env,
+
+    booking.id,
+
+    state.date,
+
+    state.time,
+
+    endTime
+
+  );
+
+  if (booking.calendarEventId) {
+
+    await updateCalendarEvent(
+
+      env,
+
+      booking.calendarEventId,
+
+      state.date,
+
+      state.time
+
+    );
+
+  }
+
+  await deleteState(
+    env,
+    chatId
+  );
+
+  await sendMessage(
+
+    env,
+
+    chatId,
+
+`✅ <b>Запись успешно перенесена!</b>
+
+📅 ${state.date}
+
+🕒 ${state.time}`
+
   );
 
   return;

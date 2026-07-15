@@ -5,11 +5,13 @@ import type { Env } from "../types/env";
 export async function getBusyTimes(
   env: Env,
   city: string,
-  date: string
+  date: string,
+  excludeBookingId?: string
 ): Promise<string[]> {
 
-  const result = await env.DB.prepare(`
+  let query = `
     SELECT
+      bookings.id,
       bookings.start_time
     FROM bookings
     INNER JOIN cities
@@ -18,10 +20,35 @@ export async function getBusyTimes(
       cities.code = ?
       AND bookings.booking_date = ?
       AND bookings.status = 'confirmed'
+  `;
+
+  const bindings: (string | number)[] = [
+    city,
+    date,
+  ];
+
+  if (excludeBookingId) {
+
+    query += `
+      AND bookings.id != ?
+    `;
+
+    bindings.push(
+      excludeBookingId
+    );
+
+  }
+
+  query += `
     ORDER BY bookings.start_time
-  `)
-    .bind(city, date)
-    .all<{ start_time: string }>();
+  `;
+
+  const result = await env.DB.prepare(query)
+    .bind(...bindings)
+    .all<{
+      id: string;
+      start_time: string;
+    }>();
 
   return result.results.map(
     row => row.start_time
@@ -36,13 +63,16 @@ export async function isTimeBusy(
   time: string
 ): Promise<boolean> {
 
-  const busyTimes = await getBusyTimes(
-    env,
-    city,
-    date
-  );
+  const busyTimes =
+    await getBusyTimes(
+      env,
+      city,
+      date
+    );
 
-  return busyTimes.includes(time);
+  return busyTimes.includes(
+    time
+  );
 
 }
 
@@ -74,11 +104,14 @@ export async function isDateClosed(
   date: string
 ): Promise<boolean> {
 
-  const closedDates = await getClosedDates(
-    env,
-    city
-  );
+  const closedDates =
+    await getClosedDates(
+      env,
+      city
+    );
 
-  return closedDates.includes(date);
+  return closedDates.includes(
+    date
+  );
 
 }

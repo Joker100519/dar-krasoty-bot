@@ -133,9 +133,9 @@ export async function getBookingById(
 
       bookings.calendar_event_id,
 
-      services.name AS service,
+      services.code AS service,
 
-      cities.name AS city
+      cities.code AS city
 
     FROM bookings
 
@@ -224,6 +224,41 @@ export async function cancelBooking(
     WHERE id = ?
   `)
     .bind(
+      bookingId
+    )
+    .run();
+
+}
+
+export async function rescheduleBooking(
+  env: Env,
+  bookingId: string,
+  bookingDate: string,
+  startTime: string,
+  endTime: string
+): Promise<void> {
+
+  await env.DB.prepare(`
+    UPDATE bookings
+
+    SET
+
+      booking_date = ?,
+
+      start_time = ?,
+
+      end_time = ?,
+
+      reminder_sent = 0,
+
+      updated_at = CURRENT_TIMESTAMP
+
+    WHERE id = ?
+  `)
+    .bind(
+      bookingDate,
+      startTime,
+      endTime,
       bookingId
     )
     .run();

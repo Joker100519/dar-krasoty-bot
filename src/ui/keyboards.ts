@@ -292,12 +292,21 @@ export function myBookingsKeyboard(
 ): InlineKeyboardMarkup {
 
   return inlineKeyboard([
+
+    [
+      {
+        text: "✏️ Перенести запись",
+        callback_data: `reschedule_booking:${bookingId}`,
+      },
+    ],
+
     [
       {
         text: "❌ Отменить запись",
         callback_data: `cancel_booking:${bookingId}`,
       },
     ],
+
   ]);
 
 }
@@ -323,6 +332,32 @@ export function confirmCancelKeyboard(
       {
         text: "↩️ Назад",
         callback_data: "my_bookings",
+      },
+    ],
+
+  ]);
+
+}
+
+// =====================================
+// Подтверждение переноса
+// =====================================
+
+export function confirmRescheduleKeyboard(): InlineKeyboardMarkup {
+
+  return inlineKeyboard([
+
+    [
+      {
+        text: "✅ Подтвердить перенос",
+        callback_data: "confirm_reschedule",
+      },
+    ],
+
+    [
+      {
+        text: "❌ Отмена",
+        callback_data: "cancel",
       },
     ],
 

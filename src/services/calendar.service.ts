@@ -170,3 +170,41 @@ export async function deleteCalendarEvent(
   }
 
 }
+
+export async function updateCalendarEvent(
+  env: Env,
+  eventId: string,
+  date: string,
+  start: string
+): Promise<void> {
+
+  const result = await post(
+    env,
+    {
+
+      action: "update",
+
+      eventId,
+
+      date,
+
+      start,
+
+      end: addMinutes(
+        start,
+        60
+      ),
+
+    }
+  );
+
+  if (!result.ok) {
+
+    throw new Error(
+      result.error ??
+      "Не удалось обновить событие"
+    );
+
+  }
+
+}

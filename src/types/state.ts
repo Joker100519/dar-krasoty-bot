@@ -8,9 +8,20 @@ export type BookingStep =
   | "confirm";
 
 export interface UserState {
+
   telegramId: number;
 
-  step: BookingStep;
+  step:
+    | "service"
+    | "city"
+    | "date"
+    | "time"
+    | "name"
+    | "phone"
+    | "confirm"
+    | "reschedule_date"
+    | "reschedule_time"
+    | "reschedule_confirm";
 
   service?: string;
 
@@ -24,9 +35,10 @@ export interface UserState {
 
   phone?: string;
 
-  messageId?: number;
+  bookingId?: string;
 
   createdAt: string;
 
   updatedAt: string;
+
 }
