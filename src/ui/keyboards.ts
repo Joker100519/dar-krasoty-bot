@@ -530,3 +530,43 @@ export function clientCardKeyboard(
   ]);
 
 }
+
+// =====================================
+// Главное меню
+// =====================================
+
+export function mainMenuKeyboard(): InlineKeyboardMarkup {
+
+  return inlineKeyboard([
+
+    [
+      {
+        text: "🌸 Записаться",
+        callback_data: "menu_booking",
+      },
+    ],
+
+    [
+      {
+        text: "📅 Мои записи",
+        callback_data: "menu_my",
+      },
+    ],
+
+    [
+      {
+        text: "📞 Контакты",
+        callback_data: "menu_contact",
+      },
+    ],
+
+    [
+      {
+        text: "ℹ️ О салоне",
+        callback_data: "menu_about",
+      },
+    ],
+
+  ]);
+
+}

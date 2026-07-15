@@ -44,13 +44,10 @@ import {
 } from "../services/schedule.service";
 
 import {
+  servicesKeyboard,
   citiesKeyboard,
   datesKeyboard,
   timeKeyboard,
-  myBookingsKeyboard,
-  confirmCancelKeyboard,
-  confirmRescheduleKeyboard,
-  adminDatesKeyboard,
 } from "../ui/keyboards";
 
 import {
@@ -74,6 +71,134 @@ export async function handleCallback(
   const data = callback.data ?? "";
 
   await answerCallback(env, callback.id);
+
+  // =====================================
+// Главное меню
+// =====================================
+
+if (data === "menu_booking") {
+
+  await updateState(
+    env,
+    chatId,
+    {
+      step: "service",
+      service: undefined,
+      city: undefined,
+      date: undefined,
+      time: undefined,
+      name: undefined,
+      phone: undefined,
+      bookingId: undefined,
+    }
+  );
+
+  await sendMessage(
+    env,
+    chatId,
+    "🌸 Выберите процедуру:",
+    servicesKeyboard()
+  );
+
+  return;
+
+}
+
+if (data === "menu_my") {
+
+  const bookings =
+    await getUserBookings(
+      env,
+      chatId
+    );
+
+  if (bookings.length === 0) {
+
+    await sendMessage(
+      env,
+      chatId,
+      "📭 У вас нет активных записей."
+    );
+
+    return;
+
+  }
+
+  for (const booking of bookings) {
+
+    await sendMessage(
+      env,
+      chatId,
+`📅 <b>${booking.bookingDate}</b>
+
+🕒 ${booking.startTime}–${booking.endTime}
+
+💆 ${booking.service}
+
+📍 ${booking.city}`,
+      myBookingsKeyboard(
+        booking.id
+      )
+    );
+
+  }
+
+  return;
+
+}
+
+if (data === "menu_contact") {
+
+  await sendMessage(
+    env,
+    chatId,
+`📍 <b>Дар Красоты</b>
+
+<b>Москва</b>
+📍 Адрес: ...
+
+<b>Тула</b>
+📍 Адрес: ...
+
+📞 Телефон:
++7 ...
+
+💬 Telegram:
+@...
+
+🟢 WhatsApp:
++7 ...
+
+Будем рады видеть вас ❤️`
+  );
+
+  return;
+
+}
+
+if (data === "menu_about") {
+
+  await sendMessage(
+    env,
+    chatId,
+`🌸 <b>Дар Красоты</b>
+
+Мы предлагаем профессиональный уход за кожей лица и современные косметологические процедуры.
+
+✨ Чистка лица
+💆 Массаж
+💉 Мезотерапия
+🌿 Маски
+✨ Пилинг
+
+Работаем по предварительной записи.
+
+Будем рады видеть вас ❤️`
+  );
+
+  return;
+
+}
 
 // =====================================
 // Админ: выбран город для закрытия
