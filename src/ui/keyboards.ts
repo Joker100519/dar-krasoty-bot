@@ -45,14 +45,20 @@ export function datesKeyboard(
   closedDates: string[]
 ): InlineKeyboardMarkup {
 
-  const rows: { text: string; callback_data: string }[][] = [];
+  const rows: {
+    text: string;
+    callback_data: string;
+  }[][] = [];
 
   const today = new Date();
 
   for (let i = 0; i < 21; i++) {
 
     const date = new Date(today);
-    date.setDate(today.getDate() + i);
+
+    date.setDate(
+      today.getDate() + i
+    );
 
     const weekday = date.getDay();
 
@@ -81,9 +87,22 @@ export function datesKeyboard(
       continue;
     }
 
-    const iso = date.toISOString().split("T")[0];
+    const iso =
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
     if (closedDates.includes(iso)) {
+      continue;
+    }
+
+    // Если на дату уже нет доступного времени —
+    // не показываем её.
+    if (
+      getAvailableHours(
+        city,
+        iso,
+        []
+      ).length === 0
+    ) {
       continue;
     }
 
@@ -97,7 +116,10 @@ export function datesKeyboard(
             month: "2-digit",
           }
         ),
-        callback_data: `date:${iso}`,
+
+        callback_data:
+          `date:${iso}`,
+
       },
     ]);
 
@@ -111,11 +133,11 @@ export function datesKeyboard(
 // Время
 // =====================================
 
-export function timeKeyboard(
+function getAvailableHours(
   city: string,
   date: string,
   busyTimes: string[]
-): InlineKeyboardMarkup {
+): number[] {
 
   const weekday = new Date(date).getDay();
 
@@ -133,12 +155,12 @@ export function timeKeyboard(
         break;
 
       case 3:
-  hours = [9,10,11];
-  break;
+        hours = [9,10,11];
+        break;
 
-case 5:
-  hours = [15,16,17,18,19,20];
-  break;
+      case 5:
+        hours = [15,16,17,18,19,20];
+        break;
 
     }
 
@@ -147,29 +169,76 @@ case 5:
     switch (weekday) {
 
       case 3:
-  hours = [15,16,17,18,19,20];
-  break;
+        hours = [15,16,17,18,19,20];
+        break;
 
-case 4:
-  hours = [9,10,11,12,13,14,15,16,17,18,19,20];
-  break;
+      case 4:
+        hours = [9,10,11,12,13,14,15,16,17,18,19,20];
+        break;
 
-case 5:
-  hours = [9,10,11];
-  break;
+      case 5:
+        hours = [9,10,11];
+        break;
 
     }
 
   }
 
-  const freeHours = hours.filter(hour => {
+  const now = new Date();
+
+  const todayIso =
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  return hours.filter(hour => {
 
     const time =
       `${hour.toString().padStart(2, "0")}:00`;
 
-    return !busyTimes.includes(time);
+    // Уже занято
+    if (busyTimes.includes(time)) {
+      return false;
+    }
+
+    // Для сегодняшнего дня
+    if (date === todayIso) {
+
+      const slot = new Date();
+
+      slot.setHours(
+        hour,
+        0,
+        0,
+        0
+      );
+
+      const diff =
+        slot.getTime() - now.getTime();
+
+      // Минимум за 2 часа
+      if (diff < 2 * 60 * 60 * 1000) {
+        return false;
+      }
+
+    }
+
+    return true;
 
   });
+
+}
+
+export function timeKeyboard(
+  city: string,
+  date: string,
+  busyTimes: string[]
+): InlineKeyboardMarkup {
+
+  const freeHours =
+    getAvailableHours(
+      city,
+      date,
+      busyTimes
+    );
 
   return inlineKeyboard(
 
